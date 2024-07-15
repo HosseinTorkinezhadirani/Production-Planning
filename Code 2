@@ -1,0 +1,132 @@
+sets
+         i /1*8/
+         j /1*6/
+         t /0*6/
+         tpp /1*6/
+         ;
+alias(t,tp);
+alias(i,ip);
+scalars
+         V /20/
+         aa /50/
+         WW /7000/
+         ;
+
+parameters
+         B(i) /1 0.06, 2 0.7, 3 0.15, 4 0.4, 5 0.35, 6 0.13, 7 0.15, 8 0.1/
+         a(j) /1 30, 2 31, 3 28, 4 28, 5 32, 6 30/
+         w(i) /1 0.2, 2 0.15, 3 0.16, 4 0.17, 5 0.18, 6 0.16, 7 0.2, 8 0.17/
+         tt(t) /0 0,1 1, 2 1, 3 1.1, 4 .12, 5 0.9, 6 1.1/
+         U(i,j,t)
+         C(i,j,t)
+         m(i,t)
+         ;
+
+U(i,j,t)=uniform(1,4);
+C(i,j,t)=uniform(600000,900000);
+m(i,t)=uniform(100,200);
+
+
+table O(j,t)
+         1       2       3       4       5       6
+1        259     278     297     318     340     364
+2        228     278     278     278     278     278
+3        230     246     263     282     302     323
+4        222     237     254     272     291     311
+5        290     310     332     355     380     407
+6        221     237     353     271     290     310
+;
+
+table Ij(i,j)
+         1       2       3       4       5       6
+1        1       1       0       0       1       0
+2        0       1       0       1       0       1
+3        1       1       0       1       0       0
+4        1       1       1       1       1       1
+5        0       1       1       1       1       1
+6        1       1       0       0       1       1
+7        1       0       1       0       1       0
+8        1       0       1       1       1       0
+;
+table h(i,t)
+         0       1       2       3       4       5       6
+1        1       24      24      24      24      24      24
+2        1       32      32      32      32      32      32
+3        0       24      24      24      24      24      24
+4        0       32      32      32      32      32      32
+5        0       24      24      24      24      24      24
+6        0       24      24      24      24      24      24
+7        0       32      32      32      32      32      32
+8        0       32      32      32      32      32      32
+;
+variables
+         z
+         ;
+integer variables
+         x
+         D
+         P
+         n
+         II
+         II1
+         II2
+         ;
+binary variables
+         zz
+         ;
+
+equations
+         obj
+         co1(i,t,j)
+         co2(i,t,j)
+         co3(j,t)
+         co4(t)
+         co51(i)
+         co52(i)
+         co6(t)
+         co71
+         co72
+         co73
+         co74
+         co75
+         co76
+         co8(j,t,i)
+         co9(i,t)
+         ;
+x.up(i,j,t)=100;
+D.up(i,t)=100;
+P.up(i,t)=100;
+n.up(j,t)=100;
+II.up(i,t)=100;
+II1.up(i,t)=100;
+II2.up(i,t)=100;
+
+obj                              ..      z =e= sum((i,t),p(i,t)*D(i,t))-sum((i,j,t),U(i,j,t)*x(i,j,t))+sum((j,t),O(j,t)*zz(j,t))+sum((j,t),n(j,t)*(tt(t)*aa*a(j)))+sum((i,t),h(i,t)*II1(i,t));
+co1(i,t,j)                       ..      sum(tpp,D(i,tpp))*zz(j,t) - x(i,j,t) =g= 0;
+co2(i,t,j)                       ..      x(i,j,t) =l= C(i,j,t);
+co3(j,t)                         ..      n(j,t) =e= sum(i,IJ(i,j)*w(i)*x(i,j,t));
+co4(t)                           ..      sum(i,w(i)*II1(i,t)) =l= WW;
+co51(i)                          ..      II1(i,'0')-II2(i,'0') =e= 0;
+co52(i)                          ..      II1(i,'6')-II2(i,'6') =e= 0;
+co6(t)                           ..      sum(j,zz(j,t)) =l= sum((i,j),Ij(i,j));
+co71                             ..      sum(ip,II1(ip,'1')-II2(ip,'1')) =e= sum(ip,II1(ip,'0')-II2(ip,'0')-D(ip,'1'))+SUM((i,j),x(i,j,'1'));
+co72                             ..      sum(ip,II1(ip,'2')-II2(ip,'2')) =e= sum(ip,II1(ip,'1')-II2(ip,'1')-D(ip,'2'))+SUM((i,j),x(i,j,'2'));
+co73                             ..      sum(ip,II1(ip,'3')-II2(ip,'3')) =e= sum(ip,II1(ip,'2')-II2(ip,'2')-D(ip,'3'))+SUM((i,j),x(i,j,'3'));
+co74                             ..      sum(ip,II1(ip,'4')-II2(ip,'4')) =e= sum(ip,II1(ip,'3')-II2(ip,'3')-D(ip,'4'))+SUM((i,j),x(i,j,'4'));
+co75                             ..      sum(ip,II1(ip,'5')-II2(ip,'5')) =e= sum(ip,II1(ip,'4')-II2(ip,'4')-D(ip,'4'))+SUM((i,j),x(i,j,'5'));
+co76                             ..      sum(ip,II1(ip,'6')-II2(ip,'6')) =e= sum(ip,II1(ip,'5')-II2(ip,'5')-D(ip,'5'))+SUM((i,j),x(i,j,'6'));
+co8(j,t,i)                       ..      n(j,t) =l= m(i,t)*zz(j,t);
+co9(i,t)                         ..      II(i,t) =e= II1(i,t)-II2(i,t);
+
+model model1 /all/;
+option optcr=0 , optcr=0;
+option  limrow=10000000, limcol=10000000;
+option MINLP=BARON;
+solve model1 using MINLP max z;
+display z.l;
+display D.l;
+display x.l;
+display p.l;
+display n.l;
+display II.l;
+display zz.l;
