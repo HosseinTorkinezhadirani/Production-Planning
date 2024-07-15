@@ -1,0 +1,85 @@
+sets
+         i producer       /1,2/
+         j distributor    /1,2/
+         k consumer       /1*4/
+         p product        /1,2/
+         t period         /1*12/
+         m shipping mode /1,2,3,4/;
+
+parameters
+         wmax(j)    /1 900,2 900/
+         s(i,j,p,m)
+         u(j,k,p,m)
+         d(k,p,t)
+         ss(i)      /1 15,2 15/
+         h(j,p)     /1.1 4,1.2 5,2.1 7,2.2 7/
+         c(i,p)     /1.1 6,1.2 6,2.1 10,2.2 10/
+         r(k,p)     /1.1 40,2.1 40,3.1 40,4.1 40,1.2 50,2.2 50,3.2 50,4.2 50/
+         vmax(i)    /1 700,2 700/
+         a(m)       /1 500,2 250,3 350,4 700/ ;
+
+loop((i,j,p,m),
+s(i,j,p,m)=uniform(1.5 , 7.5)
+);
+loop((i,j,p,m),
+u(j,k,p,m)=uniform(1 , 5.5)
+);
+loop((i,j,p,m),
+d(k,p,t)=uniform(20 , 200)
+);
+
+variable
+ z ;
+positive variable
+         co(i,j,t,m,p)
+         coo(j,k,t,m,p)
+         v(i,j,p,t)
+         w(j,p,k,t)
+         n(i,p,t)
+         q(k,p,t)
+         ww(j,p,t) ;
+
+binary variables
+         y(i,j,p,t,m)
+         yy(j,k,p,t,m) ;
+
+equations
+         objectivefunction
+         co1(i,t)
+         co2(i,t)
+         co3(j,t,p)
+         co4(k,t)
+         co5(i,j,t,m,p)
+         co6(j,k,t,m,p)
+         co7(k,p,t)
+         CO8(j,p,t)
+         co9(i,j,t,p)
+         co10(k,j,t,p)
+         co11(j,k,t,m,p)
+         co12(j,t,p)
+         co13(i,j,t,m,p)
+         co14(k,t,p) ;
+
+
+         objectivefunction..      z =e= sum((j,p,t),h(j,p)*ww(j,p,t))+12*sum(i,ss(i))+sum((i,p,t),c(i,p)*n(i,p,t))+sum((i,j,t,p,m),s(i,j,p,m)*v(i,j,p,t))+sum((j,k,t,p,m),u(j,k,p,m)*w(j,p,k,t))-sum((k,p,t),r(k,p)*q(k,p,t)) ;
+         co1(i,t)..               sum((p),n(i,p,t)) =e= sum((p,j),v(i,j,p,t));
+         co2(i,t)..               sum((p,j),v(i,j,p,t)) =l= vmax(i) ;
+         co3(j,t,p)..             ww(j,p,t) =e= ww(j,p,t-1) + sum(i,v(i,j,p,t)) - sum(k,w(j,p,k,t)) ;
+         co4(k,t)..               sum(p,q(k,p,t)) =e= sum((p,j),w(j,p,k,t)) ;
+         co5(i,j,t,m,p)..         co(i,j,t,m,p) =l= a(m) ;
+         co6(j,k,t,m,p)..         coo(j,k,t,m,p) =l= a(m) ;
+         co7(k,p,t)..             q(k,p,t) =g= d(k,p,t) ;
+         CO8(j,p,t)..             ww(j,p,t) =l= wmax(j) ;
+         co9(i,j,t,p)..           sum(m,y(i,j,p,t,m)) =e= 1 ;
+         co10(k,j,t,p)..          sum(m,yy(j,k,p,t,m)) =e= 1 ;
+         co11(j,k,t,m,p)..        coo(j,k,t,m,p) =l=  w(j,p,k,t) ;
+         co12(j,t,p)..            sum((i,m),co(i,j,t,m,p)) =g= sum((k,m),coo(j,k,t,m,p)) ;
+         co13(i,j,t,m,p)..        co(i,j,t,m,p) =l= v(i,j,p,t) ;
+         co14(k,t,p)..            sum((j,m),coo(J,k,t,m,p)) =e= d(k,p,t) ;
+
+
+
+model MODEL1 /all/;
+option MIP = Cplex ;
+solve MODEL1 using MIP min Z;
+display z.l , v.l , w.l , n.l , q.l , ww.l , y.l , yy.l ;
